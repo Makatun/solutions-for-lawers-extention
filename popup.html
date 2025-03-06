@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visa Bulletin Tracker</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Visa Bulletin Tracker</h1>
+    
+    <div class="last-updated">
+      <span>Last updated: </span>
+      <span id="last-updated-time">Loading...</span>
+    </div>
+    
+    <div class="changes-indicator" id="changes-indicator">
+      <div class="indicator-dot"></div>
+      <span>Changes detected since last update</span>
+    </div>
+    
+    <div class="tabs">
+      <button class="tab-button active" data-section="FINAL ACTION DATES">Final Action Dates</button>
+      <button class="tab-button" data-section="DATES FOR FILING">Dates for Filing</button>
+    </div>
+    
+    <div class="tab-content">
+      <div id="visa-bulletin-table" class="table-container">
+        <div class="loading">Loading data...</div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
