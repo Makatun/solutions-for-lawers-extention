@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const tableContainer = document.getElementById('visa-bulletin-table');
   const lastUpdatedElement = document.getElementById('last-updated-time');
   const changesIndicator = document.getElementById('changes-indicator');
+  const changesText = document.getElementById('changes-text');
   const acknowledgeBtn = document.getElementById('acknowledge-btn');
   const tabButtons = document.querySelectorAll('.tab-button');
 
@@ -38,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function loadData() {
     // Get visa bulletin data from storage
-    chrome.storage.local.get(['visaBulletinData', 'lastUpdated', 'hasChanges', 'previousData', 'changesAcknowledged'], (result) => {
+    chrome.storage.local.get(['visaBulletinData', 'lastUpdated', 'hasChanges', 'previousData', 'changesAcknowledged', 'changeCount'], (result) => {
       // Update last updated time
       if (result.lastUpdated) {
         const date = new Date(result.lastUpdated);
@@ -50,6 +51,9 @@ document.addEventListener('DOMContentLoaded', () => {
       // Show/hide changes indicator
       if (result.hasChanges && !result.changesAcknowledged) {
         changesIndicator.classList.add('visible');
+        // Update the changes text to show the count
+        const changeCountText = result.changeCount === 1 ? '1 change' : `${result.changeCount} changes`;
+        changesText.textContent = `${changeCountText} detected since last update`;
       } else {
         changesIndicator.classList.remove('visible');
       }

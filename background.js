@@ -38,12 +38,56 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 // Function to update the extension icon
-function displayNotification(hasUnacknowledgedChanges) {
+function displayNotification(hasUnacknowledgedChanges, changeCount = 0) {
+
+  if (changeCount === 0) {
+    chrome.action.setBadgeText({ text: '' });
+    return;
+  }
+
 
   chrome.action.setBadgeBackgroundColor({ color: 'red' });
   chrome.action.setBadgeTextColor({ color: 'white' });
-  chrome.action.setBadgeText({ text: hasUnacknowledgedChanges ? '10' : '' });
+  chrome.action.setBadgeText({
+    text: hasUnacknowledgedChanges ? changeCount.toString() : ''
+  });
+}
 
+// Count changes between two objects
+function countChanges(oldData, newData) {
+  if (!oldData) return 0;
+
+  let changeCount = 0;
+
+  // Count changes in FINAL ACTION DATES
+  if (oldData["FINAL ACTION DATES"] && newData["FINAL ACTION DATES"]) {
+    Object.keys(newData["FINAL ACTION DATES"]).forEach(category => {
+      if (oldData["FINAL ACTION DATES"][category]) {
+        Object.keys(newData["FINAL ACTION DATES"][category]).forEach(country => {
+          if (oldData["FINAL ACTION DATES"][category][country] !==
+            newData["FINAL ACTION DATES"][category][country]) {
+            changeCount++;
+          }
+        });
+      }
+    });
+  }
+
+  // Count changes in DATES FOR FILING
+  if (oldData["DATES FOR FILING"] && newData["DATES FOR FILING"]) {
+    Object.keys(newData["DATES FOR FILING"]).forEach(category => {
+      if (oldData["DATES FOR FILING"][category]) {
+        Object.keys(newData["DATES FOR FILING"][category]).forEach(country => {
+          if (oldData["DATES FOR FILING"][category][country] !==
+            newData["DATES FOR FILING"][category][country]) {
+            changeCount++;
+          }
+        });
+      }
+    });
+  }
+
+  return changeCount;
 }
 
 // Fetch data from API
@@ -65,15 +109,15 @@ async function fetchVisaBulletin() {
     const data = {
       "FINAL ACTION DATES": {
         "F1": {
-          "All": "Nov 13, 2015",
-          "CHINA": "Nov 24, 2015",
-          "INDIA": "Nov 22, 2015",
-          "Mexico": "Nov 22, 2004",
+          "All": "Nov 14, 2015",
+          "CHINA": "Nov 22, 2015",
+          "INDIA": "Nov 24, 2015",
+          "Mexico": "Nov 25, 2004",
           "Philippines": "Mar 8, 2012"
         },
         "F2A": {
           "All": "Jan 1, 2022",
-          "CHINA": "Jan 1, 2022",
+          "CHINA": "Jan 13, 2022",
           "INDIA": "Jan 1, 2022",
           "Mexico": "May 15, 2021",
           "Philippines": "Jan 1, 2022"
@@ -145,21 +189,25 @@ async function fetchVisaBulletin() {
       const newData = data;
       const hasChanges = oldData ? JSON.stringify(oldData) !== JSON.stringify(newData) : false;
 
+      // Count number of changes
+      const changeCount = countChanges(oldData, newData);
+
       // Store new data and timestamp
       chrome.storage.local.set({
         visaBulletinData: newData,
         lastUpdated: new Date().toISOString(),
         hasChanges: hasChanges,
-        previousData: oldData || null
+        previousData: oldData || null,
+        changeCount: changeCount  // Store change count
       });
 
       // If changes detected, set changesAcknowledged to false and update icon
       if (hasChanges) {
         chrome.storage.local.set({ changesAcknowledged: false });
-        displayNotification(true);
+        displayNotification(true, changeCount);
       }
 
-      console.log('Visa Bulletin data updated');
+      console.log(`Visa Bulletin data updated. Changes detected: ${changeCount}`);
     });
 
   } catch (error) {
