@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Get elements
   const tableContainer = document.getElementById('visa-bulletin-table');
   const lastUpdatedElement = document.getElementById('last-updated-time');
-  const changesIndicator = document.getElementById('changes-indicator');
   const tabButtons = document.querySelectorAll('.tab-button');
 
   // Initial active section
@@ -37,12 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
         lastUpdatedElement.textContent = 'No data yet';
       }
 
-      // Show/hide changes indicator
-      if (result.hasChanges) {
-        changesIndicator.classList.add('visible');
-      } else {
-        changesIndicator.classList.remove('visible');
-      }
+
 
       // Render table if data exists
       if (result.visaBulletinData) {

@@ -43,7 +43,7 @@ async function fetchVisaBulletin() {
     const data = {
       "FINAL ACTION DATES": {
         "F1": {
-          "All": "Nov 24, 2015",
+          "All": "Nov 25, 2015",
           "CHINA": "Nov 22, 2015",
           "INDIA": "Nov 22, 2015",
           "Mexico": "Nov 22, 2004",

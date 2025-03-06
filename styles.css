@@ -27,29 +27,6 @@ h1 {
   margin-bottom: 12px;
 }
 
-.changes-indicator {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-  padding: 8px 12px;
-  background-color: #feebc8;
-  border-radius: 4px;
-  color: #744210;
-  font-weight: 500;
-  display: none;
-}
-
-.changes-indicator.visible {
-  display: flex;
-}
-
-.indicator-dot {
-  width: 10px;
-  height: 10px;
-  background-color: #dd6b20;
-  border-radius: 50%;
-}
 
 .tabs {
   display: flex;
