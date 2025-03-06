@@ -27,6 +27,46 @@ h1 {
   margin-bottom: 12px;
 }
 
+.changes-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  background-color: #feebc8;
+  border-radius: 4px;
+  color: #744210;
+  font-weight: 500;
+  display: none;
+}
+
+.changes-indicator.visible {
+  display: flex;
+}
+
+.indicator-dot {
+  width: 10px;
+  height: 10px;
+  background-color: #dd6b20;
+  border-radius: 50%;
+}
+
+.acknowledge-btn {
+  margin-left: auto;
+  padding: 4px 10px;
+  background-color: #dd6b20;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.acknowledge-btn:hover {
+  background-color: #c05621;
+}
 
 .tabs {
   display: flex;

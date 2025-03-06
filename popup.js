@@ -2,10 +2,21 @@ document.addEventListener('DOMContentLoaded', () => {
   // Get elements
   const tableContainer = document.getElementById('visa-bulletin-table');
   const lastUpdatedElement = document.getElementById('last-updated-time');
+  const changesIndicator = document.getElementById('changes-indicator');
+  const acknowledgeBtn = document.getElementById('acknowledge-btn');
   const tabButtons = document.querySelectorAll('.tab-button');
 
   // Initial active section
   let activeSection = 'FINAL ACTION DATES';
+
+  // Set up acknowledge button
+  acknowledgeBtn.addEventListener('click', () => {
+    chrome.runtime.sendMessage({ action: "acknowledgeChanges" }, (response) => {
+      if (response && response.status === "acknowledged") {
+        changesIndicator.classList.remove('visible');
+      }
+    });
+  });
 
   // Load data from storage
   loadData();
@@ -27,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function loadData() {
     // Get visa bulletin data from storage
-    chrome.storage.local.get(['visaBulletinData', 'lastUpdated', 'hasChanges', 'previousData'], (result) => {
+    chrome.storage.local.get(['visaBulletinData', 'lastUpdated', 'hasChanges', 'previousData', 'changesAcknowledged'], (result) => {
       // Update last updated time
       if (result.lastUpdated) {
         const date = new Date(result.lastUpdated);
@@ -36,7 +47,12 @@ document.addEventListener('DOMContentLoaded', () => {
         lastUpdatedElement.textContent = 'No data yet';
       }
 
-
+      // Show/hide changes indicator
+      if (result.hasChanges && !result.changesAcknowledged) {
+        changesIndicator.classList.add('visible');
+      } else {
+        changesIndicator.classList.remove('visible');
+      }
 
       // Render table if data exists
       if (result.visaBulletinData) {

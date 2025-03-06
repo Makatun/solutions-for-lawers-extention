@@ -13,6 +13,9 @@ chrome.runtime.onInstalled.addListener(() => {
     periodInMinutes: FETCH_INTERVAL_MINUTES
   });
 
+  // Initialize storage with acknowledged state
+  chrome.storage.local.set({ changesAcknowledged: true });
+
   // Perform initial fetch
   fetchVisaBulletin();
 });
@@ -23,6 +26,25 @@ chrome.alarms.onAlarm.addListener((alarm) => {
     fetchVisaBulletin();
   }
 });
+
+// Listen for messages from popup
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "acknowledgeChanges") {
+    chrome.storage.local.set({ changesAcknowledged: true });
+    displayNotification(false);
+    sendResponse({ status: "acknowledged" });
+    return true; // Keep the message channel open for the async response
+  }
+});
+
+// Function to update the extension icon
+function displayNotification(hasUnacknowledgedChanges) {
+
+  chrome.action.setBadgeBackgroundColor({ color: 'red' });
+  chrome.action.setBadgeTextColor({ color: 'white' });
+  chrome.action.setBadgeText({ text: hasUnacknowledgedChanges ? '10' : '' });
+
+}
 
 // Fetch data from API
 async function fetchVisaBulletin() {
@@ -43,8 +65,8 @@ async function fetchVisaBulletin() {
     const data = {
       "FINAL ACTION DATES": {
         "F1": {
-          "All": "Nov 25, 2015",
-          "CHINA": "Nov 22, 2015",
+          "All": "Nov 13, 2015",
+          "CHINA": "Nov 24, 2015",
           "INDIA": "Nov 22, 2015",
           "Mexico": "Nov 22, 2004",
           "Philippines": "Mar 8, 2012"
@@ -118,17 +140,24 @@ async function fetchVisaBulletin() {
     }
 
     // Get current stored data to compare
-    chrome.storage.local.get(['visaBulletinData', 'lastUpdated'], (result) => {
+    chrome.storage.local.get(['visaBulletinData', 'lastUpdated', 'changesAcknowledged'], (result) => {
       const oldData = result.visaBulletinData;
       const newData = data;
+      const hasChanges = oldData ? JSON.stringify(oldData) !== JSON.stringify(newData) : false;
 
       // Store new data and timestamp
       chrome.storage.local.set({
         visaBulletinData: newData,
         lastUpdated: new Date().toISOString(),
-        hasChanges: oldData ? JSON.stringify(oldData) !== JSON.stringify(newData) : false,
+        hasChanges: hasChanges,
         previousData: oldData || null
       });
+
+      // If changes detected, set changesAcknowledged to false and update icon
+      if (hasChanges) {
+        chrome.storage.local.set({ changesAcknowledged: false });
+        displayNotification(true);
+      }
 
       console.log('Visa Bulletin data updated');
     });
