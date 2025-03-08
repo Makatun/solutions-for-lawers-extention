@@ -75,6 +75,8 @@ async function fetchVisaBulletin() {
 
     // const data = await response.json();
 
+    // const data = await response.json();
+
     const data = {
       "FINAL ACTION DATES": {
         "F1": {
@@ -123,7 +125,7 @@ async function fetchVisaBulletin() {
         },
         "F2A": {
           "All": "Jul 11, 2024",
-          "CHINA": "Jul 1, 2024",
+          "CHINA": "Jul 12, 2024",
           "INDIA": "Jul 1, 2024",
           "Mexico": "Jul 15, 2024",
           "Philippines": "Jul 15, 2024"
@@ -153,6 +155,7 @@ async function fetchVisaBulletin() {
     }
     data["FINAL ACTION DATES"]["F1"]["All"] = "Nov " + (new Date()).getSeconds() / 2 + ", 2015";
 
+
     // Get current stored data to compare
     chrome.storage.local.get([
       'visaBulletinData',
@@ -160,69 +163,68 @@ async function fetchVisaBulletin() {
       'lastChangeDate',
       'changesAcknowledged',
       'accumulatedChanges',
-      'trackedChanges'
+      'trackedChanges',
+      'changeRegistry'
     ], (result) => {
       const oldData = result.visaBulletinData;
       const newData = data;
+      const now = new Date().toISOString();
 
-      // Count number of changes in this update
-      const newChangeCount = countChanges(oldData, newData);
+      // Get existing change registry
+      const existingRegistry = result.changeRegistry || {};
+
+      // Count new changes using the registry
+      const { count: newChangeCount, changes: newChanges } = countChanges(oldData, newData, existingRegistry);
 
       // Only consider it a change if at least one date actually changed
       const hasChanges = newChangeCount > 0;
 
-      const existingTrackedChanges = result.trackedChanges || {};
-      const now = new Date().toISOString();
-
-      // Get the current accumulated changes
-      let accumulatedChanges = result.accumulatedChanges || 0;
+      // Update the registry with new changes
+      const updatedRegistry = { ...existingRegistry, ...newChanges };
 
       // Track changes for highlighting
-      let updatedTrackedChanges = existingTrackedChanges;
+      const updatedTrackedChanges = hasChanges ?
+        trackChanges(oldData, newData, result.changesAcknowledged ? {} : result.trackedChanges, updatedRegistry) :
+        result.trackedChanges || {};
 
-      // Update storage object
+      // Calculate total highlighted changes
+      const totalHighlightedChanges = Object.keys(updatedTrackedChanges)
+        .reduce((sum, section) =>
+          sum + Object.keys(updatedTrackedChanges[section])
+            .reduce((sectionSum, category) =>
+              sectionSum + Object.keys(updatedTrackedChanges[section][category])
+                .filter(country => updatedTrackedChanges[section][category][country].changed)
+                .length, 0), 0);
+
+      // Update storage
       const storageUpdate = {
         visaBulletinData: newData,
-        lastUpdated: now
+        lastUpdated: now,
+        changeRegistry: updatedRegistry,
+        trackedChanges: updatedTrackedChanges,
+        hasChanges: hasChanges || (!result.changesAcknowledged && totalHighlightedChanges > 0),
+        previousData: oldData || null,
+        changeCount: newChangeCount,
+        accumulatedChanges: totalHighlightedChanges,
+        changesAcknowledged: result.changesAcknowledged && !hasChanges
       };
 
-      // If there are new changes, add them to tracked changes and update last change date
       if (hasChanges) {
-        if (result.changesAcknowledged) {
-          // If previously acknowledged, start fresh with new changes
-          accumulatedChanges = newChangeCount;
-          updatedTrackedChanges = trackChanges(oldData, newData);
-        } else {
-          // Otherwise add to accumulated changes and tracked changes
-          accumulatedChanges += newChangeCount;
-          updatedTrackedChanges = trackChanges(oldData, newData, existingTrackedChanges);
-        }
-
-        // Update last change date when changes are detected
         storageUpdate.lastChangeDate = now;
       }
 
-      // Add remaining properties to storage update
-      storageUpdate.hasChanges = hasChanges || (!result.changesAcknowledged && accumulatedChanges > 0);
-      storageUpdate.previousData = oldData || null;
-      storageUpdate.changeCount = newChangeCount;
-      storageUpdate.accumulatedChanges = accumulatedChanges;
-      storageUpdate.changesAcknowledged = result.changesAcknowledged && !hasChanges;
-      storageUpdate.trackedChanges = updatedTrackedChanges;
-
-      // Store new data and timestamp
+      // Store updates
       chrome.storage.local.set(storageUpdate);
 
-      // If changes detected and count is greater than zero, set changesAcknowledged to false and update icon
-      if ((hasChanges || !result.changesAcknowledged) && accumulatedChanges > 0) {
+      // Update notification
+      if ((hasChanges || !result.changesAcknowledged) && totalHighlightedChanges > 0) {
         chrome.storage.local.set({ changesAcknowledged: false });
-        displayNotification(true, accumulatedChanges);
-      } else if (accumulatedChanges <= 0) {
-        // If no changes to acknowledge, make sure notification is cleared
+        displayNotification(true, totalHighlightedChanges);
+      } else if (totalHighlightedChanges <= 0) {
         displayNotification(false, 0);
       }
 
-      console.log(`Visa Bulletin data updated. New changes: ${newChangeCount}, Total accumulated: ${accumulatedChanges}`);
+      console.log(`Visa Bulletin data updated. New changes: ${newChangeCount}, Total highlighted: ${totalHighlightedChanges}`);
     });
 
   } catch (error) {

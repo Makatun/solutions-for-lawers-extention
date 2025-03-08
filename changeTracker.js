@@ -5,101 +5,81 @@
 import { isDate, parseVisaDate } from './utils.js';
 
 // Count changes between two objects
-export function countChanges(oldData, newData) {
-    if (!oldData) return 0;
+export function countChanges(oldData, newData, changeRegistry = {}) {
+    if (!oldData) return { count: 0, changes: {} };
 
+    const newChanges = {};
     let changeCount = 0;
 
-    // Count changes in FINAL ACTION DATES
-    if (oldData["FINAL ACTION DATES"] && newData["FINAL ACTION DATES"]) {
-        Object.keys(newData["FINAL ACTION DATES"]).forEach(category => {
-            if (oldData["FINAL ACTION DATES"][category]) {
-                Object.keys(newData["FINAL ACTION DATES"][category]).forEach(country => {
-                    if (oldData["FINAL ACTION DATES"][category][country] !==
-                        newData["FINAL ACTION DATES"][category][country]) {
-                        changeCount++;
-                    }
-                });
-            }
-        });
-    }
+    ['FINAL ACTION DATES', 'DATES FOR FILING'].forEach(section => {
+        if (oldData[section] && newData[section]) {
+            Object.keys(newData[section]).forEach(category => {
+                if (oldData[section][category]) {
+                    Object.keys(newData[section][category]).forEach(country => {
+                        const oldValue = oldData[section][category][country];
+                        const newValue = newData[section][category][country];
+                        const changeKey = `${section}|${category}|${country}`;
 
-    // Count changes in DATES FOR FILING
-    if (oldData["DATES FOR FILING"] && newData["DATES FOR FILING"]) {
-        Object.keys(newData["DATES FOR FILING"]).forEach(category => {
-            if (oldData["DATES FOR FILING"][category]) {
-                Object.keys(newData["DATES FOR FILING"][category]).forEach(country => {
-                    if (oldData["DATES FOR FILING"][category][country] !==
-                        newData["DATES FOR FILING"][category][country]) {
-                        changeCount++;
-                    }
-                });
-            }
-        });
-    }
+                        // Only count if value changed and it's not already in registry with same value
+                        if (oldValue !== newValue &&
+                            (!changeRegistry[changeKey] || changeRegistry[changeKey].currentValue !== newValue)) {
 
-    return changeCount;
+                            newChanges[changeKey] = {
+                                originalValue: changeRegistry[changeKey]?.originalValue || oldValue,
+                                currentValue: newValue,
+                                section,
+                                category,
+                                country
+                            };
+                            changeCount++;
+                        }
+                    });
+                }
+            });
+        }
+    });
+
+    return { count: changeCount, changes: newChanges };
 }
 
 // Track specific changes between versions to maintain highlighting
-export function trackChanges(oldData, newData, existingTrackedChanges = {}) {
+export function trackChanges(oldData, newData, existingTrackedChanges = {}, changeRegistry = {}) {
     if (!oldData) return existingTrackedChanges;
 
     const trackedChanges = JSON.parse(JSON.stringify(existingTrackedChanges)) || {};
 
-    // Initialize section objects if they don't exist
-    if (!trackedChanges["FINAL ACTION DATES"]) trackedChanges["FINAL ACTION DATES"] = {};
-    if (!trackedChanges["DATES FOR FILING"]) trackedChanges["DATES FOR FILING"] = {};
+    ['FINAL ACTION DATES', 'DATES FOR FILING'].forEach(section => {
+        if (!trackedChanges[section]) trackedChanges[section] = {};
 
-    // Track changes in FINAL ACTION DATES
-    if (oldData["FINAL ACTION DATES"] && newData["FINAL ACTION DATES"]) {
-        Object.keys(newData["FINAL ACTION DATES"]).forEach(category => {
-            if (!trackedChanges["FINAL ACTION DATES"][category]) {
-                trackedChanges["FINAL ACTION DATES"][category] = {};
-            }
+        if (oldData[section] && newData[section]) {
+            Object.keys(newData[section]).forEach(category => {
+                if (!trackedChanges[section][category]) {
+                    trackedChanges[section][category] = {};
+                }
 
-            if (oldData["FINAL ACTION DATES"][category]) {
-                Object.keys(newData["FINAL ACTION DATES"][category]).forEach(country => {
-                    const oldValue = oldData["FINAL ACTION DATES"][category][country];
-                    const newValue = newData["FINAL ACTION DATES"][category][country];
+                if (oldData[section][category]) {
+                    Object.keys(newData[section][category]).forEach(country => {
+                        const oldValue = oldData[section][category][country];
+                        const newValue = newData[section][category][country];
+                        const changeKey = `${section}|${category}|${country}`;
 
-                    if (oldValue !== newValue) {
-                        trackedChanges["FINAL ACTION DATES"][category][country] = {
-                            oldValue,
-                            newValue,
-                            changed: true,
-                            direction: getChangeDirection(oldValue, newValue)
-                        };
-                    }
-                });
-            }
-        });
-    }
-
-    // Track changes in DATES FOR FILING
-    if (oldData["DATES FOR FILING"] && newData["DATES FOR FILING"]) {
-        Object.keys(newData["DATES FOR FILING"]).forEach(category => {
-            if (!trackedChanges["DATES FOR FILING"][category]) {
-                trackedChanges["DATES FOR FILING"][category] = {};
-            }
-
-            if (oldData["DATES FOR FILING"][category]) {
-                Object.keys(newData["DATES FOR FILING"][category]).forEach(country => {
-                    const oldValue = oldData["DATES FOR FILING"][category][country];
-                    const newValue = newData["DATES FOR FILING"][category][country];
-
-                    if (oldValue !== newValue) {
-                        trackedChanges["DATES FOR FILING"][category][country] = {
-                            oldValue,
-                            newValue,
-                            changed: true,
-                            direction: getChangeDirection(oldValue, newValue)
-                        };
-                    }
-                });
-            }
-        });
-    }
+                        if (oldValue !== newValue) {
+                            const registryEntry = changeRegistry[changeKey];
+                            trackedChanges[section][category][country] = {
+                                oldValue: registryEntry?.originalValue || oldValue,
+                                newValue,
+                                changed: true,
+                                direction: getChangeDirection(
+                                    registryEntry?.originalValue || oldValue,
+                                    newValue
+                                )
+                            };
+                        }
+                    });
+                }
+            });
+        }
+    });
 
     return trackedChanges;
 }
