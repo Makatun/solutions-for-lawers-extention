@@ -18,9 +18,17 @@ document.addEventListener('DOMContentLoaded', () => {
     chrome.runtime.sendMessage({ action: "acknowledgeChanges" }, (response) => {
       if (response && response.status === "acknowledged") {
         changesIndicator.classList.remove('visible');
+        acknowledgeBtn.style.display = 'none';
 
         // Clear tab change indicators
         tabButtons.forEach(btn => btn.classList.remove('has-changes'));
+
+        // Remove all highlighting by re-rendering the table without tracked changes
+        chrome.storage.local.get(['visaBulletinData'], (result) => {
+          if (result.visaBulletinData) {
+            renderTable(result.visaBulletinData, {});  // Pass empty object for tracked changes
+          }
+        });
       }
     });
   });
@@ -151,21 +159,15 @@ document.addEventListener('DOMContentLoaded', () => {
         let changeDirection = '';
         let tooltip = '';
 
-        // Check if value has tracked changes
-        if (trackedSectionChanges &&
-          trackedSectionChanges[category] &&
-          trackedSectionChanges[category][country]) {
-
-          const change = trackedSectionChanges[category][country];
-
-          if (change.changed) {
-            cellClass = 'changed';
-            changeDirection = change.direction || '';
-            tooltip = `Changed from ${change.oldValue}`;
-          }
+        // Only add change indicators if we have tracked changes
+        if (Object.keys(trackedChanges).length > 0 &&
+          trackedSectionChanges?.[category]?.[country]?.changed) {
+          cellClass = 'changed';
+          changeDirection = trackedSectionChanges[category][country].direction || '';
+          tooltip = `Changed from ${trackedSectionChanges[category][country].oldValue}`;
         }
 
-        tableHtml += `<td class="${cellClass} ${changeDirection}" 
+        tableHtml += `<td class="${cellClass} ${changeDirection}"
                          title="${tooltip}">${currentValue}</td>`;
       });
 

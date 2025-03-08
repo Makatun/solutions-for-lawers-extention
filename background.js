@@ -34,15 +34,17 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 // Listen for messages from popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "acknowledgeChanges") {
-    // Reset accumulated changes and clear tracked changes
+    // Reset accumulated changes and clear ALL tracking data
     chrome.storage.local.set({
       changesAcknowledged: true,
       accumulatedChanges: 0,
-      trackedChanges: {}  // Clear tracked changes
+      trackedChanges: {},  // Clear tracked changes
+      changeRegistry: {},  // Clear change registry to reset tracking
+      hasChanges: false   // Reset changes flag
     });
     displayNotification(false, 0);
     sendResponse({ status: "acknowledged" });
-    return true; // Keep the message channel open for the async response
+    return true;
   }
 });
 
@@ -88,7 +90,7 @@ async function fetchVisaBulletin() {
         },
         "F2A": {
           "All": "Jan 13, 2022",
-          "CHINA": "Jan 12, 2022",
+          "CHINA": "Jan 1, 2022",
           "INDIA": "Jan 1, 2022",
           "Mexico": "May 1, 2021",
           "Philippines": "Jan 1, 2022"
