@@ -45,14 +45,19 @@ document.addEventListener('DOMContentLoaded', () => {
     chrome.storage.local.get([
       'visaBulletinData',
       'lastUpdated',
+      'lastChangeDate',
       'hasChanges',
       'previousData',
       'changesAcknowledged',
       'accumulatedChanges',
       'trackedChanges'
     ], (result) => {
-      // Update last updated time
-      if (result.lastUpdated) {
+      // Update last change time instead of last updated time
+      if (result.lastChangeDate) {
+        const date = new Date(result.lastChangeDate);
+        lastUpdatedElement.textContent = date.toLocaleString();
+      } else if (result.lastUpdated) {
+        // Fallback to last updated if no change date is available
         const date = new Date(result.lastUpdated);
         lastUpdatedElement.textContent = date.toLocaleString();
       } else {

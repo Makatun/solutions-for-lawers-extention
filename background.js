@@ -2,7 +2,7 @@
 const API_URL = 'https://lv8sqtgrfk.execute-api.us-east-1.amazonaws.com/dev/files/visa-bulleting-latest.json';
 const API_KEY = '9y8AypqIpn2G5OQ9eTtcB59EVOOc7BBN7vuxSqGE';
 const ALARM_NAME = 'fetch-visa-bulletin';
-const FETCH_INTERVAL_MINUTES = 10;
+const FETCH_INTERVAL_MINUTES = .2;
 
 // Initialize extension
 chrome.runtime.onInstalled.addListener(() => {
@@ -207,100 +207,105 @@ async function fetchVisaBulletin() {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
 
-    const data = await response.json();
+    // const data = await response.json();
 
-    // const data = {
-    //   "FINAL ACTION DATES": {
-    //     "F1": {
-    //       "All": "Nov 14, 2015",
-    //       "CHINA": "Nov 22, 2015",
-    //       "INDIA": "Nov 24, 2015",
-    //       "Mexico": "Nov 2, 2004",
-    //       "Philippines": "Mar 8, 2012"
-    //     },
-    //     "F2A": {
-    //       "All": "Jan 13, 2022",
-    //       "CHINA": "Jan 12, 2022",
-    //       "INDIA": "Jan 1, 2022",
-    //       "Mexico": "May 1, 2021",
-    //       "Philippines": "Jan 1, 2022"
-    //     },
-    //     "F2B": {
-    //       "All": "May 6, 2016",
-    //       "CHINA": "May 21, 2016",
-    //       "INDIA": "May 22, 2016",
-    //       "Mexico": "Jul 13, 2005",
-    //       "Philippines": "Oct 22, 2011"
-    //     },
-    //     "F3": {
-    //       "All": "Jul 14, 2010",
-    //       "CHINA": "Jul 13, 2010",
-    //       "INDIA": "Jul 4, 2010",
-    //       "Mexico": "Nov 22, 2000",
-    //       "Philippines": "Jan 22, 2003"
-    //     },
-    //     "F4": {
-    //       "All": "Aug 12, 2007",
-    //       "CHINA": "Aug 2, 2007",
-    //       "INDIA": "Apr 8, 2006",
-    //       "Mexico": "Mar 1, 2001",
-    //       "Philippines": "Oct 15, 2004"
-    //     }
-    //   },
-    //   "DATES FOR FILING": {
-    //     "F1": {
-    //       "All": "Sep 15, 2017",
-    //       "CHINA": "Sep 14, 2017",
-    //       "INDIA": "Sep 21, 2017",
-    //       "Mexico": "Oct 14, 2005",
-    //       "Philippines": "Apr 22, 2015"
-    //     },
-    //     "F2A": {
-    //       "All": "Jul 11, 2024",
-    //       "CHINA": "Jul 1, 2024",
-    //       "INDIA": "Jul 1, 2024",
-    //       "Mexico": "Jul 15, 2024",
-    //       "Philippines": "Jul 15, 2024"
-    //     },
-    //     "F2B": {
-    //       "All": "Jan 1, 2017",
-    //       "CHINA": "Jan 1, 2017",
-    //       "INDIA": "Jan 13, 2017",
-    //       "Mexico": "Oct 1, 2006",
-    //       "Philippines": "Oct 1, 2013"
-    //     },
-    //     "F3": {
-    //       "All": "Jul 22, 2012",
-    //       "CHINA": "Jul 2, 2012",
-    //       "INDIA": "Jul 22, 2012",
-    //       "Mexico": "Jun 15, 2001",
-    //       "Philippines": "May 8, 2004"
-    //     },
-    //     "F4": {
-    //       "All": "Mar 1, 2008",
-    //       "CHINA": "Mar 1, 2008",
-    //       "INDIA": "Aug 15, 2006",
-    //       "Mexico": "Apr 3, 2001",
-    //       "Philippines": "Jan 1, 2008"
-    //     }
-    //   }
-    // }
+    const data = {
+      "FINAL ACTION DATES": {
+        "F1": {
+          "All": "Nov 14, 2015",
+          "CHINA": "Nov 22, 2015",
+          "INDIA": "Nov 24, 2015",
+          "Mexico": "Nov 2, 2004",
+          "Philippines": "Mar 8, 2012"
+        },
+        "F2A": {
+          "All": "Jan 13, 2022",
+          "CHINA": "Jan 12, 2022",
+          "INDIA": "Jan 1, 2022",
+          "Mexico": "May 1, 2021",
+          "Philippines": "Jan 1, 2022"
+        },
+        "F2B": {
+          "All": "May 6, 2016",
+          "CHINA": "May 21, 2016",
+          "INDIA": "May 22, 2016",
+          "Mexico": "Jul 13, 2005",
+          "Philippines": "Oct 22, 2011"
+        },
+        "F3": {
+          "All": "Jul 14, 2010",
+          "CHINA": "Jul 1, 2010",
+          "INDIA": "Jul 4, 2010",
+          "Mexico": "Nov 22, 2000",
+          "Philippines": "Jan 22, 2003"
+        },
+        "F4": {
+          "All": "Aug 12, 2007",
+          "CHINA": "Aug 2, 2007",
+          "INDIA": "Apr 8, 2006",
+          "Mexico": "Mar 1, 2001",
+          "Philippines": "Oct 15, 2004"
+        }
+      },
+      "DATES FOR FILING": {
+        "F1": {
+          "All": "Sep 13, 2017",
+          "CHINA": "Sep 14, 2017",
+          "INDIA": "Sep 21, 2017",
+          "Mexico": "Oct 14, 2005",
+          "Philippines": "Apr 22, 2015"
+        },
+        "F2A": {
+          "All": "Jul 11, 2024",
+          "CHINA": "Jul 1, 2024",
+          "INDIA": "Jul 1, 2024",
+          "Mexico": "Jul 15, 2024",
+          "Philippines": "Jul 15, 2024"
+        },
+        "F2B": {
+          "All": "Jan 12, 2017",
+          "CHINA": "Jan 1, 2017",
+          "INDIA": "Jan 13, 2017",
+          "Mexico": "Oct 1, 2006",
+          "Philippines": "Oct 1, 2013"
+        },
+        "F3": {
+          "All": "Jul 2, 2012",
+          "CHINA": "Jul 2, 2012",
+          "INDIA": "Jul 22, 2012",
+          "Mexico": "Jun 15, 2001",
+          "Philippines": "May 8, 2004"
+        },
+        "F4": {
+          "All": "Mar 1, 2008",
+          "CHINA": "Mar 12, 2008",
+          "INDIA": "Aug 15, 2006",
+          "Mexico": "Apr 3, 2001",
+          "Philippines": "Jan 1, 2008"
+        }
+      }
+    }
 
     // Get current stored data to compare
     chrome.storage.local.get([
       'visaBulletinData',
       'lastUpdated',
+      'lastChangeDate',
       'changesAcknowledged',
       'accumulatedChanges',
       'trackedChanges'
     ], (result) => {
       const oldData = result.visaBulletinData;
       const newData = data;
-      const hasChanges = oldData ? JSON.stringify(oldData) !== JSON.stringify(newData) : false;
-      const existingTrackedChanges = result.trackedChanges || {};
 
       // Count number of changes in this update
       const newChangeCount = countChanges(oldData, newData);
+
+      // Only consider it a change if at least one date actually changed
+      const hasChanges = newChangeCount > 0;
+
+      const existingTrackedChanges = result.trackedChanges || {};
+      const now = new Date().toISOString();
 
       // Get the current accumulated changes
       let accumulatedChanges = result.accumulatedChanges || 0;
@@ -308,7 +313,13 @@ async function fetchVisaBulletin() {
       // Track changes for highlighting
       let updatedTrackedChanges = existingTrackedChanges;
 
-      // If there are new changes, add them to tracked changes
+      // Update storage object
+      const storageUpdate = {
+        visaBulletinData: newData,
+        lastUpdated: now
+      };
+
+      // If there are new changes, add them to tracked changes and update last change date
       if (hasChanges) {
         if (result.changesAcknowledged) {
           // If previously acknowledged, start fresh with new changes
@@ -319,19 +330,21 @@ async function fetchVisaBulletin() {
           accumulatedChanges += newChangeCount;
           updatedTrackedChanges = trackChanges(oldData, newData, existingTrackedChanges);
         }
+
+        // Update last change date when changes are detected
+        storageUpdate.lastChangeDate = now;
       }
 
+      // Add remaining properties to storage update
+      storageUpdate.hasChanges = hasChanges || (!result.changesAcknowledged && accumulatedChanges > 0);
+      storageUpdate.previousData = oldData || null;
+      storageUpdate.changeCount = newChangeCount;
+      storageUpdate.accumulatedChanges = accumulatedChanges;
+      storageUpdate.changesAcknowledged = result.changesAcknowledged && !hasChanges;
+      storageUpdate.trackedChanges = updatedTrackedChanges;
+
       // Store new data and timestamp
-      chrome.storage.local.set({
-        visaBulletinData: newData,
-        lastUpdated: new Date().toISOString(),
-        hasChanges: hasChanges || (!result.changesAcknowledged && accumulatedChanges > 0),
-        previousData: oldData || null,
-        changeCount: newChangeCount,
-        accumulatedChanges: accumulatedChanges,
-        changesAcknowledged: result.changesAcknowledged && !hasChanges,
-        trackedChanges: updatedTrackedChanges
-      });
+      chrome.storage.local.set(storageUpdate);
 
       // If changes detected and count is greater than zero, set changesAcknowledged to false and update icon
       if ((hasChanges || !result.changesAcknowledged) && accumulatedChanges > 0) {
