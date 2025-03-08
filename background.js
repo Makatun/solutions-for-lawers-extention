@@ -30,8 +30,13 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 // Listen for messages from popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "acknowledgeChanges") {
-    chrome.storage.local.set({ changesAcknowledged: true });
-    displayNotification(false);
+    // Reset accumulated changes and clear tracked changes
+    chrome.storage.local.set({
+      changesAcknowledged: true,
+      accumulatedChanges: 0,
+      trackedChanges: {}  // Clear tracked changes
+    });
+    displayNotification(false, 0);
     sendResponse({ status: "acknowledged" });
     return true; // Keep the message channel open for the async response
   }
@@ -39,12 +44,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // Function to update the extension icon
 function displayNotification(hasUnacknowledgedChanges, changeCount = 0) {
-
   if (changeCount === 0) {
     chrome.action.setBadgeText({ text: '' });
     return;
   }
-
 
   chrome.action.setBadgeBackgroundColor({ color: 'red' });
   chrome.action.setBadgeTextColor({ color: 'white' });
@@ -90,6 +93,107 @@ function countChanges(oldData, newData) {
   return changeCount;
 }
 
+// Track specific changes between versions to maintain highlighting
+function trackChanges(oldData, newData, existingTrackedChanges = {}) {
+  if (!oldData) return existingTrackedChanges;
+
+  const trackedChanges = JSON.parse(JSON.stringify(existingTrackedChanges)) || {};
+
+  // Initialize section objects if they don't exist
+  if (!trackedChanges["FINAL ACTION DATES"]) trackedChanges["FINAL ACTION DATES"] = {};
+  if (!trackedChanges["DATES FOR FILING"]) trackedChanges["DATES FOR FILING"] = {};
+
+  // Track changes in FINAL ACTION DATES
+  if (oldData["FINAL ACTION DATES"] && newData["FINAL ACTION DATES"]) {
+    Object.keys(newData["FINAL ACTION DATES"]).forEach(category => {
+      if (!trackedChanges["FINAL ACTION DATES"][category]) {
+        trackedChanges["FINAL ACTION DATES"][category] = {};
+      }
+
+      if (oldData["FINAL ACTION DATES"][category]) {
+        Object.keys(newData["FINAL ACTION DATES"][category]).forEach(country => {
+          const oldValue = oldData["FINAL ACTION DATES"][category][country];
+          const newValue = newData["FINAL ACTION DATES"][category][country];
+
+          if (oldValue !== newValue) {
+            trackedChanges["FINAL ACTION DATES"][category][country] = {
+              oldValue,
+              newValue,
+              changed: true,
+              direction: getChangeDirection(oldValue, newValue)
+            };
+          }
+        });
+      }
+    });
+  }
+
+  // Track changes in DATES FOR FILING
+  if (oldData["DATES FOR FILING"] && newData["DATES FOR FILING"]) {
+    Object.keys(newData["DATES FOR FILING"]).forEach(category => {
+      if (!trackedChanges["DATES FOR FILING"][category]) {
+        trackedChanges["DATES FOR FILING"][category] = {};
+      }
+
+      if (oldData["DATES FOR FILING"][category]) {
+        Object.keys(newData["DATES FOR FILING"][category]).forEach(country => {
+          const oldValue = oldData["DATES FOR FILING"][category][country];
+          const newValue = newData["DATES FOR FILING"][category][country];
+
+          if (oldValue !== newValue) {
+            trackedChanges["DATES FOR FILING"][category][country] = {
+              oldValue,
+              newValue,
+              changed: true,
+              direction: getChangeDirection(oldValue, newValue)
+            };
+          }
+        });
+      }
+    });
+  }
+
+  return trackedChanges;
+}
+
+// Helper function to determine change direction for dates
+function getChangeDirection(oldValue, newValue) {
+  if (!isDate(oldValue) || !isDate(newValue)) return 'changed';
+
+  const oldDate = parseVisaDate(oldValue);
+  const newDate = parseVisaDate(newValue);
+
+  if (newDate > oldDate) {
+    return 'moved-forward';
+  } else if (newDate < oldDate) {
+    return 'moved-backward';
+  } else {
+    return 'changed';
+  }
+}
+
+// Helper functions for date parsing
+function isDate(str) {
+  // Check if string matches visa bulletin date format (e.g., "01MAY15")
+  return /^\d{2}[A-Z]{3}\d{2}$/.test(str);
+}
+
+function parseVisaDate(dateStr) {
+  if (dateStr === 'C') return new Date('9999-12-31'); // "Current" is latest date
+  if (dateStr === 'U') return new Date('0000-01-01'); // "Unavailable" is earliest
+
+  const months = {
+    'JAN': 0, 'FEB': 1, 'MAR': 2, 'APR': 3, 'MAY': 4, 'JUN': 5,
+    'JUL': 6, 'AUG': 7, 'SEP': 8, 'OCT': 9, 'NOV': 10, 'DEC': 11
+  };
+
+  const day = parseInt(dateStr.slice(0, 2), 10);
+  const month = months[dateStr.slice(2, 5)];
+  const year = 2000 + parseInt(dateStr.slice(5, 7), 10);
+
+  return new Date(year, month, day);
+}
+
 // Fetch data from API
 async function fetchVisaBulletin() {
   try {
@@ -116,9 +220,9 @@ async function fetchVisaBulletin() {
           "Philippines": "Mar 8, 2012"
         },
         "F2A": {
-          "All": "Jan 1, 2022",
+          "All": "Jan 13, 2022",
           "CHINA": "Jan 13, 2022",
-          "INDIA": "Jan 1, 2022",
+          "INDIA": "Jan 16, 2022",
           "Mexico": "May 15, 2021",
           "Philippines": "Jan 1, 2022"
         },
@@ -132,13 +236,13 @@ async function fetchVisaBulletin() {
         "F3": {
           "All": "Jul 1, 2010",
           "CHINA": "Jul 1, 2010",
-          "INDIA": "Jul 1, 2010",
+          "INDIA": "Jul 4, 2010",
           "Mexico": "Nov 22, 2000",
           "Philippines": "Jan 22, 2003"
         },
         "F4": {
-          "All": "Aug 1, 2007",
-          "CHINA": "Aug 1, 2007",
+          "All": "Aug 12, 2007",
+          "CHINA": "Aug 21, 2007",
           "INDIA": "Apr 8, 2006",
           "Mexico": "Mar 1, 2001",
           "Philippines": "Oct 15, 2004"
@@ -146,23 +250,23 @@ async function fetchVisaBulletin() {
       },
       "DATES FOR FILING": {
         "F1": {
-          "All": "Sep 1, 2017",
-          "CHINA": "Sep 1, 2017",
-          "INDIA": "Sep 1, 2017",
+          "All": "Sep 15, 2017",
+          "CHINA": "Sep 14, 2017",
+          "INDIA": "Sep 2, 2017",
           "Mexico": "Oct 1, 2005",
           "Philippines": "Apr 22, 2015"
         },
         "F2A": {
           "All": "Jul 15, 2024",
-          "CHINA": "Jul 15, 2024",
-          "INDIA": "Jul 15, 2024",
+          "CHINA": "Jul 14, 2024",
+          "INDIA": "Jul 13, 2024",
           "Mexico": "Jul 15, 2024",
           "Philippines": "Jul 15, 2024"
         },
         "F2B": {
           "All": "Jan 1, 2017",
-          "CHINA": "Jan 1, 2017",
-          "INDIA": "Jan 1, 2017",
+          "CHINA": "Jan 14, 2017",
+          "INDIA": "Jan 13, 2017",
           "Mexico": "Oct 1, 2006",
           "Philippines": "Oct 1, 2013"
         },
@@ -184,30 +288,59 @@ async function fetchVisaBulletin() {
     }
 
     // Get current stored data to compare
-    chrome.storage.local.get(['visaBulletinData', 'lastUpdated', 'changesAcknowledged'], (result) => {
+    chrome.storage.local.get([
+      'visaBulletinData',
+      'lastUpdated',
+      'changesAcknowledged',
+      'accumulatedChanges',
+      'trackedChanges'
+    ], (result) => {
       const oldData = result.visaBulletinData;
       const newData = data;
       const hasChanges = oldData ? JSON.stringify(oldData) !== JSON.stringify(newData) : false;
+      const existingTrackedChanges = result.trackedChanges || {};
 
-      // Count number of changes
-      const changeCount = countChanges(oldData, newData);
+      // Count number of changes in this update
+      const newChangeCount = countChanges(oldData, newData);
+
+      // Get the current accumulated changes
+      let accumulatedChanges = result.accumulatedChanges || 0;
+
+      // Track changes for highlighting
+      let updatedTrackedChanges = existingTrackedChanges;
+
+      // If there are new changes, add them to tracked changes
+      if (hasChanges) {
+        if (result.changesAcknowledged) {
+          // If previously acknowledged, start fresh with new changes
+          accumulatedChanges = newChangeCount;
+          updatedTrackedChanges = trackChanges(oldData, newData);
+        } else {
+          // Otherwise add to accumulated changes and tracked changes
+          accumulatedChanges += newChangeCount;
+          updatedTrackedChanges = trackChanges(oldData, newData, existingTrackedChanges);
+        }
+      }
 
       // Store new data and timestamp
       chrome.storage.local.set({
         visaBulletinData: newData,
         lastUpdated: new Date().toISOString(),
-        hasChanges: hasChanges,
+        hasChanges: hasChanges || (!result.changesAcknowledged && accumulatedChanges > 0),
         previousData: oldData || null,
-        changeCount: changeCount  // Store change count
+        changeCount: newChangeCount,
+        accumulatedChanges: accumulatedChanges,
+        changesAcknowledged: result.changesAcknowledged && !hasChanges,
+        trackedChanges: updatedTrackedChanges
       });
 
       // If changes detected, set changesAcknowledged to false and update icon
-      if (hasChanges) {
+      if (hasChanges || (!result.changesAcknowledged && accumulatedChanges > 0)) {
         chrome.storage.local.set({ changesAcknowledged: false });
-        displayNotification(true, changeCount);
+        displayNotification(true, accumulatedChanges);
       }
 
-      console.log(`Visa Bulletin data updated. Changes detected: ${changeCount}`);
+      console.log(`Visa Bulletin data updated. New changes: ${newChangeCount}, Total accumulated: ${accumulatedChanges}`);
     });
 
   } catch (error) {

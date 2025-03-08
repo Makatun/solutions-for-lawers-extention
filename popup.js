@@ -39,7 +39,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function loadData() {
     // Get visa bulletin data from storage
-    chrome.storage.local.get(['visaBulletinData', 'lastUpdated', 'hasChanges', 'previousData', 'changesAcknowledged', 'changeCount'], (result) => {
+    chrome.storage.local.get([
+      'visaBulletinData',
+      'lastUpdated',
+      'hasChanges',
+      'previousData',
+      'changesAcknowledged',
+      'accumulatedChanges',
+      'trackedChanges'
+    ], (result) => {
       // Update last updated time
       if (result.lastUpdated) {
         const date = new Date(result.lastUpdated);
@@ -51,26 +59,27 @@ document.addEventListener('DOMContentLoaded', () => {
       // Show/hide changes indicator
       if (result.hasChanges && !result.changesAcknowledged) {
         changesIndicator.classList.add('visible');
-        // Update the changes text to show the count
-        const changeCountText = result.changeCount === 1 ? '1 change' : `${result.changeCount} changes`;
-        changesText.textContent = `${changeCountText} detected since last update`;
+        // Update the changes text to show the accumulated count
+        const accumulatedChanges = result.accumulatedChanges || 0;
+        const changeCountText = accumulatedChanges === 1 ? '1 change' : `${accumulatedChanges} changes`;
+        changesText.textContent = `${changeCountText} detected since last acknowledgment`;
       } else {
         changesIndicator.classList.remove('visible');
       }
 
       // Render table if data exists
       if (result.visaBulletinData) {
-        renderTable(result.visaBulletinData, result.previousData);
+        renderTable(result.visaBulletinData, result.trackedChanges);
       } else {
         tableContainer.innerHTML = '<div class="no-data">No data available. Try again later.</div>';
       }
     });
   }
 
-  function renderTable(data, previousData) {
+  function renderTable(data, trackedChanges) {
     // Select the active section data
     const sectionData = data[activeSection];
-    const previousSectionData = previousData ? previousData[activeSection] : null;
+    const trackedSectionChanges = trackedChanges && trackedChanges[activeSection] ? trackedChanges[activeSection] : {};
 
     if (!sectionData) {
       tableContainer.innerHTML = '<div class="error">Invalid data format</div>';
@@ -111,29 +120,17 @@ document.addEventListener('DOMContentLoaded', () => {
         let changeDirection = '';
         let tooltip = '';
 
-        // Check if value has changed
-        if (previousSectionData &&
-          previousSectionData[category] &&
-          previousSectionData[category][country] !== undefined &&
-          previousSectionData[category][country] !== currentValue) {
+        // Check if value has tracked changes
+        if (trackedSectionChanges &&
+          trackedSectionChanges[category] &&
+          trackedSectionChanges[category][country]) {
 
-          cellClass = 'changed';
-          const previousValue = previousSectionData[category][country];
+          const change = trackedSectionChanges[category][country];
 
-          // Determine if date moved forward or backward (if applicable)
-          if (isDate(currentValue) && isDate(previousValue)) {
-            const currentDate = parseVisaDate(currentValue);
-            const previousDate = parseVisaDate(previousValue);
-
-            if (currentDate > previousDate) {
-              changeDirection = 'moved-forward';
-              tooltip = `Moved forward from ${previousValue}`;
-            } else {
-              changeDirection = 'moved-backward';
-              tooltip = `Moved backward from ${previousValue}`;
-            }
-          } else {
-            tooltip = `Changed from ${previousValue}`;
+          if (change.changed) {
+            cellClass = 'changed';
+            changeDirection = change.direction || '';
+            tooltip = `Changed from ${change.oldValue}`;
           }
         }
 
