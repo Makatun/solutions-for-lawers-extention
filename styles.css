@@ -18,12 +18,14 @@ body {
 h1 {
   font-size: 24px;
   margin-bottom: 16px;
-  color: #2d3748;
+  color: #546e7a;
+  /* Changed to darker blue */
 }
 
 .last-updated {
   font-size: 14px;
-  color: #718096;
+  color: #546e7a;
+  /* Changed to blue-gray */
   margin-bottom: 12px;
 }
 
@@ -33,9 +35,11 @@ h1 {
   gap: 8px;
   margin-bottom: 16px;
   padding: 8px 12px;
-  background-color: #feebc8;
+  background-color: #e3f2fd;
+  /* Light blue background */
   border-radius: 4px;
-  color: #744210;
+  color: #0d47a1;
+  /* Dark blue text */
   font-weight: 500;
   display: none;
 }
@@ -47,14 +51,16 @@ h1 {
 .indicator-dot {
   width: 10px;
   height: 10px;
-  background-color: #dd6b20;
+  background-color: #1976d2;
+  /* Medium blue */
   border-radius: 50%;
 }
 
 .acknowledge-btn {
   margin-left: auto;
   padding: 4px 10px;
-  background-color: #dd6b20;
+  background-color: #1976d2;
+  /* Medium blue */
   border: none;
   border-radius: 4px;
   color: white;
@@ -66,7 +72,8 @@ h1 {
 }
 
 .acknowledge-btn:hover {
-  background-color: #c05621;
+  background-color: #0d47a1;
+  /* Darker blue on hover */
 }
 
 .tabs {
@@ -88,19 +95,24 @@ h1 {
 }
 
 .tab-button.active {
-  color: #3182ce;
-  border-bottom: 2px solid #3182ce;
+  color: #1976d2;
+  /* Changed to medium blue */
+  border-bottom: 2px solid #1976d2;
+  /* Changed to medium blue */
   font-weight: 500;
 }
 
 .tab-button:hover:not(.active) {
-  color: #2c5282;
-  background-color: #ebf8ff;
+  color: #0d47a1;
+  /* Changed to darker blue */
+  background-color: #e3f2fd;
+  /* Light blue background */
 }
 
 /* New styles for tab with changes */
 .tab-button.has-changes:not(.active) {
-  color: #dd6b20;
+  color: #1976d2;
+  /* Changed to medium blue */
   font-weight: 500;
   position: relative;
 }
@@ -112,13 +124,16 @@ h1 {
   right: 8px;
   width: 8px;
   height: 8px;
-  background-color: #dd6b20;
+  background-color: #1976d2;
+  /* Changed to medium blue */
   border-radius: 50%;
 }
 
 .tab-button.has-changes.active {
-  color: #3182ce;
-  border-bottom: 2px solid #3182ce;
+  color: #1976d2;
+  /* Changed to medium blue */
+  border-bottom: 2px solid #1976d2;
+  /* Changed to medium blue */
   font-weight: 500;
 }
 
@@ -129,14 +144,16 @@ h1 {
   right: 8px;
   width: 8px;
   height: 8px;
-  background-color: #3182ce;
+  background-color: #1976d2;
+  /* Changed to medium blue */
   border-radius: 50%;
 }
 
 .table-container {
   background-color: white;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(25, 118, 210, 0.2);
+  /* Blue shadow */
   overflow: hidden;
 }
 
@@ -176,7 +193,8 @@ tr:hover {
 }
 
 td.changed {
-  background-color: #feebc8;
+  background-color: #e3f2fd;
+  /* Light blue background */
   font-weight: 500;
   position: relative;
 }
@@ -188,7 +206,8 @@ td.changed::after {
   left: 0;
   width: 4px;
   height: 100%;
-  background-color: #dd6b20;
+  background-color: #1976d2;
+  /* Medium blue left border */
 }
 
 .loading,
@@ -200,11 +219,13 @@ td.changed::after {
 }
 
 .error {
-  color: #c53030;
+  color: #d32f2f;
+  /* Changed to red */
 }
 
 .moved-forward {
-  background-color: #d4edda !important;
+  background-color: #bbdefb !important;
+  /* Lighter blue background */
   position: relative;
 }
 
@@ -213,12 +234,14 @@ td.changed::after {
   position: absolute;
   top: 2px;
   right: 2px;
-  color: green;
+  color: #1565c0;
+  /* Darker blue */
   font-weight: bold;
 }
 
 .moved-backward {
-  background-color: #f8d7da !important;
+  background-color: #e1f5fe !important;
+  /* Very light blue background */
   position: relative;
 }
 
@@ -227,6 +250,6 @@ td.changed::after {
   position: absolute;
   top: 2px;
   right: 2px;
-  color: red;
-  font-weight: bold;
+  color: #0288d1;
+  /* Medium-light blue */
 }
