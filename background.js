@@ -2,7 +2,11 @@
 const API_URL = 'https://lv8sqtgrfk.execute-api.us-east-1.amazonaws.com/dev/files/visa-bulleting-latest.json';
 const API_KEY = '9y8AypqIpn2G5OQ9eTtcB59EVOOc7BBN7vuxSqGE';
 const ALARM_NAME = 'fetch-visa-bulletin';
-const FETCH_INTERVAL_MINUTES = .2;
+const FETCH_INTERVAL_MINUTES = 0.2;
+
+// Import utility functions
+import { isDate, parseVisaDate } from './utils.js';
+import { trackChanges, countChanges } from './changeTracker.js';
 
 // Initialize extension
 chrome.runtime.onInstalled.addListener(() => {
@@ -55,144 +59,6 @@ function displayNotification(hasUnacknowledgedChanges, changeCount = 0) {
   chrome.action.setBadgeText({ text: changeCount.toString() });
 }
 
-// Count changes between two objects
-function countChanges(oldData, newData) {
-  if (!oldData) return 0;
-
-  let changeCount = 0;
-
-  // Count changes in FINAL ACTION DATES
-  if (oldData["FINAL ACTION DATES"] && newData["FINAL ACTION DATES"]) {
-    Object.keys(newData["FINAL ACTION DATES"]).forEach(category => {
-      if (oldData["FINAL ACTION DATES"][category]) {
-        Object.keys(newData["FINAL ACTION DATES"][category]).forEach(country => {
-          if (oldData["FINAL ACTION DATES"][category][country] !==
-            newData["FINAL ACTION DATES"][category][country]) {
-            changeCount++;
-          }
-        });
-      }
-    });
-  }
-
-  // Count changes in DATES FOR FILING
-  if (oldData["DATES FOR FILING"] && newData["DATES FOR FILING"]) {
-    Object.keys(newData["DATES FOR FILING"]).forEach(category => {
-      if (oldData["DATES FOR FILING"][category]) {
-        Object.keys(newData["DATES FOR FILING"][category]).forEach(country => {
-          if (oldData["DATES FOR FILING"][category][country] !==
-            newData["DATES FOR FILING"][category][country]) {
-            changeCount++;
-          }
-        });
-      }
-    });
-  }
-
-  return changeCount;
-}
-
-// Track specific changes between versions to maintain highlighting
-function trackChanges(oldData, newData, existingTrackedChanges = {}) {
-  if (!oldData) return existingTrackedChanges;
-
-  const trackedChanges = JSON.parse(JSON.stringify(existingTrackedChanges)) || {};
-
-  // Initialize section objects if they don't exist
-  if (!trackedChanges["FINAL ACTION DATES"]) trackedChanges["FINAL ACTION DATES"] = {};
-  if (!trackedChanges["DATES FOR FILING"]) trackedChanges["DATES FOR FILING"] = {};
-
-  // Track changes in FINAL ACTION DATES
-  if (oldData["FINAL ACTION DATES"] && newData["FINAL ACTION DATES"]) {
-    Object.keys(newData["FINAL ACTION DATES"]).forEach(category => {
-      if (!trackedChanges["FINAL ACTION DATES"][category]) {
-        trackedChanges["FINAL ACTION DATES"][category] = {};
-      }
-
-      if (oldData["FINAL ACTION DATES"][category]) {
-        Object.keys(newData["FINAL ACTION DATES"][category]).forEach(country => {
-          const oldValue = oldData["FINAL ACTION DATES"][category][country];
-          const newValue = newData["FINAL ACTION DATES"][category][country];
-
-          if (oldValue !== newValue) {
-            trackedChanges["FINAL ACTION DATES"][category][country] = {
-              oldValue,
-              newValue,
-              changed: true,
-              direction: getChangeDirection(oldValue, newValue)
-            };
-          }
-        });
-      }
-    });
-  }
-
-  // Track changes in DATES FOR FILING
-  if (oldData["DATES FOR FILING"] && newData["DATES FOR FILING"]) {
-    Object.keys(newData["DATES FOR FILING"]).forEach(category => {
-      if (!trackedChanges["DATES FOR FILING"][category]) {
-        trackedChanges["DATES FOR FILING"][category] = {};
-      }
-
-      if (oldData["DATES FOR FILING"][category]) {
-        Object.keys(newData["DATES FOR FILING"][category]).forEach(country => {
-          const oldValue = oldData["DATES FOR FILING"][category][country];
-          const newValue = newData["DATES FOR FILING"][category][country];
-
-          if (oldValue !== newValue) {
-            trackedChanges["DATES FOR FILING"][category][country] = {
-              oldValue,
-              newValue,
-              changed: true,
-              direction: getChangeDirection(oldValue, newValue)
-            };
-          }
-        });
-      }
-    });
-  }
-
-  return trackedChanges;
-}
-
-// Helper function to determine change direction for dates
-function getChangeDirection(oldValue, newValue) {
-  if (!isDate(oldValue) || !isDate(newValue)) return 'changed';
-
-  const oldDate = parseVisaDate(oldValue);
-  const newDate = parseVisaDate(newValue);
-
-  if (newDate > oldDate) {
-    return 'moved-forward';
-  } else if (newDate < oldDate) {
-    return 'moved-backward';
-  } else {
-    return 'changed';
-  }
-}
-
-// Helper functions for date parsing
-function isDate(str) {
-  // Check if string matches visa bulletin date format (e.g., "01MAY15")
-  return /^\d{2}[A-Z]{3}\d{2}$/.test(str);
-}
-
-function parseVisaDate(dateStr) {
-  if (dateStr === 'C') return new Date('9999-12-31'); // "Current" is latest date
-  if (dateStr === 'U') return new Date('0000-01-01'); // "Unavailable" is earliest
-
-  const months = {
-    'JAN': 0, 'FEB': 1, 'MAR': 2, 'APR': 3, 'MAY': 4, 'JUN': 5,
-    'JUL': 6, 'AUG': 7, 'SEP': 8, 'OCT': 9, 'NOV': 10, 'DEC': 11
-  };
-
-  const day = parseInt(dateStr.slice(0, 2), 10);
-  const month = months[dateStr.slice(2, 5)];
-  const year = 2000 + parseInt(dateStr.slice(5, 7), 10);
-
-  return new Date(year, month, day);
-}
-
 // Fetch data from API
 async function fetchVisaBulletin() {
   try {
@@ -213,8 +79,8 @@ async function fetchVisaBulletin() {
       "FINAL ACTION DATES": {
         "F1": {
           "All": "Nov 14, 2015",
-          "CHINA": "Nov 22, 2015",
-          "INDIA": "Nov 24, 2015",
+          "CHINA": "Nov 21, 2015",
+          "INDIA": "Nov 2, 2015",
           "Mexico": "Nov 2, 2004",
           "Philippines": "Mar 8, 2012"
         },
@@ -272,7 +138,7 @@ async function fetchVisaBulletin() {
         "F3": {
           "All": "Jul 2, 2012",
           "CHINA": "Jul 2, 2012",
-          "INDIA": "Jul 22, 2012",
+          "INDIA": "Jul 2, 2012",
           "Mexico": "Jun 15, 2001",
           "Philippines": "May 8, 2004"
         },
@@ -285,6 +151,7 @@ async function fetchVisaBulletin() {
         }
       }
     }
+    data["FINAL ACTION DATES"]["F1"]["All"] = "Nov " + (new Date()).getSeconds() / 2 + ", 2015";
 
     // Get current stored data to compare
     chrome.storage.local.get([

@@ -1,3 +1,6 @@
+import { formatDateTime } from './utils.js';
+import { sectionHasChanges } from './changeTracker.js';
+
 document.addEventListener('DOMContentLoaded', () => {
   // Get elements
   const tableContainer = document.getElementById('visa-bulletin-table');
@@ -53,16 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
       'trackedChanges'
     ], (result) => {
       // Update last change time instead of last updated time
-      if (result.lastChangeDate) {
-        const date = new Date(result.lastChangeDate);
-        lastUpdatedElement.textContent = date.toLocaleString();
-      } else if (result.lastUpdated) {
-        // Fallback to last updated if no change date is available
-        const date = new Date(result.lastUpdated);
-        lastUpdatedElement.textContent = date.toLocaleString();
-      } else {
-        lastUpdatedElement.textContent = 'No data yet';
-      }
+      lastUpdatedElement.textContent = formatDateTime(result.lastChangeDate || result.lastUpdated);
 
       // Show/hide changes indicator
       const accumulatedChanges = result.accumulatedChanges || 0;
@@ -111,24 +105,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     }
-  }
-
-  // Check if a section has any changes
-  function sectionHasChanges(sectionChanges) {
-    if (!sectionChanges) return false;
-
-    // Check each category in the section
-    for (const category in sectionChanges) {
-      // For each country in the category
-      for (const country in sectionChanges[category]) {
-        // If this entry has a change, return true
-        if (sectionChanges[category][country] && sectionChanges[category][country].changed) {
-          return true;
-        }
-      }
-    }
-
-    return false;
   }
 
   function renderTable(data, trackedChanges) {
@@ -200,27 +176,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update table container
     tableContainer.innerHTML = tableHtml;
-  }
-
-  // Helper functions for date parsing
-  function isDate(str) {
-    // Check if string matches visa bulletin date format (e.g., "01MAY15")
-    return /^\d{2}[A-Z]{3}\d{2}$/.test(str);
-  }
-
-  function parseVisaDate(dateStr) {
-    if (dateStr === 'C') return new Date('9999-12-31'); // "Current" is latest date
-    if (dateStr === 'U') return new Date('0000-01-01'); // "Unavailable" is earliest
-
-    const months = {
-      'JAN': 0, 'FEB': 1, 'MAR': 2, 'APR': 3, 'MAY': 4, 'JUN': 5,
-      'JUL': 6, 'AUG': 7, 'SEP': 8, 'OCT': 9, 'NOV': 10, 'DEC': 11
-    };
-
-    const day = parseInt(dateStr.slice(0, 2), 10);
-    const month = months[dateStr.slice(2, 5)];
-    const year = 2000 + parseInt(dateStr.slice(5, 7), 10);
-
-    return new Date(year, month, day);
   }
 });
