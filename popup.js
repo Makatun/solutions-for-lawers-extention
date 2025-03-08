@@ -60,17 +60,20 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // Show/hide changes indicator
-      if (result.hasChanges && !result.changesAcknowledged) {
+      const accumulatedChanges = result.accumulatedChanges || 0;
+
+      if (result.hasChanges && !result.changesAcknowledged && accumulatedChanges > 0) {
         changesIndicator.classList.add('visible');
         // Update the changes text to show the accumulated count
-        const accumulatedChanges = result.accumulatedChanges || 0;
-        const changeCountText = accumulatedChanges === 1 ? '1 change' : `${accumulatedChanges} changes`;
-        changesText.textContent = `${changeCountText} detected since last acknowledgment`;
+        const changeCountText = accumulatedChanges === 1 ? '1 date' : `${accumulatedChanges} dates`;
+        changesText.textContent = `${changeCountText} changed`;
+        acknowledgeBtn.style.display = 'block'; // Show the button
 
         // Add indicators to tabs with changes
         highlightTabsWithChanges(result.trackedChanges || {});
       } else {
         changesIndicator.classList.remove('visible');
+        acknowledgeBtn.style.display = 'none'; // Hide the button
         // Remove all tab indicators
         tabButtons.forEach(btn => btn.classList.remove('has-changes'));
       }
