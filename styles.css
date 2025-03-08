@@ -83,6 +83,7 @@ h1 {
   font-size: 16px;
   color: #4a5568;
   border-bottom: 2px solid transparent;
+  position: relative;
 }
 
 .tab-button.active {
@@ -94,6 +95,41 @@ h1 {
 .tab-button:hover:not(.active) {
   color: #2c5282;
   background-color: #ebf8ff;
+}
+
+/* New styles for tab with changes */
+.tab-button.has-changes:not(.active) {
+  color: #dd6b20;
+  font-weight: 500;
+  position: relative;
+}
+
+.tab-button.has-changes:not(.active)::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  background-color: #dd6b20;
+  border-radius: 50%;
+}
+
+.tab-button.has-changes.active {
+  color: #3182ce;
+  border-bottom: 2px solid #3182ce;
+  font-weight: 500;
+}
+
+.tab-button.has-changes.active::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  background-color: #3182ce;
+  border-radius: 50%;
 }
 
 .table-container {

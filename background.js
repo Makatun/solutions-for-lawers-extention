@@ -227,7 +227,7 @@ async function fetchVisaBulletin() {
           "Philippines": "Jan 1, 2022"
         },
         "F2B": {
-          "All": "May 22, 2016",
+          "All": "May 6, 2016",
           "CHINA": "May 22, 2016",
           "INDIA": "May 22, 2016",
           "Mexico": "Jul 1, 2005",
@@ -242,7 +242,7 @@ async function fetchVisaBulletin() {
         },
         "F4": {
           "All": "Aug 12, 2007",
-          "CHINA": "Aug 21, 2007",
+          "CHINA": "Aug 2, 2007",
           "INDIA": "Apr 8, 2006",
           "Mexico": "Mar 1, 2001",
           "Philippines": "Oct 15, 2004"
@@ -257,15 +257,15 @@ async function fetchVisaBulletin() {
           "Philippines": "Apr 22, 2015"
         },
         "F2A": {
-          "All": "Jul 15, 2024",
-          "CHINA": "Jul 14, 2024",
-          "INDIA": "Jul 13, 2024",
+          "All": "Jul 11, 2024",
+          "CHINA": "Jul 1, 2024",
+          "INDIA": "Jul 1, 2024",
           "Mexico": "Jul 15, 2024",
           "Philippines": "Jul 15, 2024"
         },
         "F2B": {
           "All": "Jan 1, 2017",
-          "CHINA": "Jan 14, 2017",
+          "CHINA": "Jan 1, 2017",
           "INDIA": "Jan 13, 2017",
           "Mexico": "Oct 1, 2006",
           "Philippines": "Oct 1, 2013"
@@ -281,7 +281,7 @@ async function fetchVisaBulletin() {
           "All": "Mar 1, 2008",
           "CHINA": "Mar 1, 2008",
           "INDIA": "Aug 15, 2006",
-          "Mexico": "Apr 30, 2001",
+          "Mexico": "Apr 3, 2001",
           "Philippines": "Jan 1, 2008"
         }
       }

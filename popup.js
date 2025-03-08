@@ -15,6 +15,9 @@ document.addEventListener('DOMContentLoaded', () => {
     chrome.runtime.sendMessage({ action: "acknowledgeChanges" }, (response) => {
       if (response && response.status === "acknowledged") {
         changesIndicator.classList.remove('visible');
+
+        // Clear tab change indicators
+        tabButtons.forEach(btn => btn.classList.remove('has-changes'));
       }
     });
   });
@@ -63,8 +66,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const accumulatedChanges = result.accumulatedChanges || 0;
         const changeCountText = accumulatedChanges === 1 ? '1 change' : `${accumulatedChanges} changes`;
         changesText.textContent = `${changeCountText} detected since last acknowledgment`;
+
+        // Add indicators to tabs with changes
+        highlightTabsWithChanges(result.trackedChanges || {});
       } else {
         changesIndicator.classList.remove('visible');
+        // Remove all tab indicators
+        tabButtons.forEach(btn => btn.classList.remove('has-changes'));
       }
 
       // Render table if data exists
@@ -74,6 +82,45 @@ document.addEventListener('DOMContentLoaded', () => {
         tableContainer.innerHTML = '<div class="no-data">No data available. Try again later.</div>';
       }
     });
+  }
+
+  // Function to highlight tabs that have changes
+  function highlightTabsWithChanges(trackedChanges) {
+    // First reset all tab indicators
+    tabButtons.forEach(btn => btn.classList.remove('has-changes'));
+
+    if (!trackedChanges) return;
+
+    // For each section, check if there are changes
+    for (const section in trackedChanges) {
+      const sectionChanges = trackedChanges[section];
+
+      // If there are any changes in this section, find the corresponding tab and highlight it
+      if (sectionHasChanges(sectionChanges)) {
+        const tabButton = document.querySelector(`.tab-button[data-section="${section}"]`);
+        if (tabButton) {
+          tabButton.classList.add('has-changes');
+        }
+      }
+    }
+  }
+
+  // Check if a section has any changes
+  function sectionHasChanges(sectionChanges) {
+    if (!sectionChanges) return false;
+
+    // Check each category in the section
+    for (const category in sectionChanges) {
+      // For each country in the category
+      for (const country in sectionChanges[category]) {
+        // If this entry has a change, return true
+        if (sectionChanges[category][country] && sectionChanges[category][country].changed) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   function renderTable(data, trackedChanges) {
